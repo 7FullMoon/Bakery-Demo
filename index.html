@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f5c4d">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>نظام المخبز المحاسبي — نسخة تجريبية</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1ec;--card:#fff;--tx:#1d2a27;--mu:#66756f;--ac:#1f5c4d;--ac2:#c8963e;--bd:#d6ddd6;--ok:#1f7a4d;--no:#b3372f;--on:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141b19;--card:#1e2926;--tx:#e8efeb;--mu:#93a39c;--ac:#5fc3a5;--ac2:#e0b25e;--bd:#2f3d38;--ok:#6fd6a0;--no:#f0847c;--on:#10201b}}
+:root[data-theme="dark"]{--bg:#141b19;--card:#1e2926;--tx:#e8efeb;--mu:#93a39c;--ac:#5fc3a5;--ac2:#e0b25e;--bd:#2f3d38;--ok:#6fd6a0;--no:#f0847c;--on:#10201b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:400 15px/1.6 Tajawal,Tahoma,Arial,sans-serif}
+header{padding:14px 16px 4px;max-width:1040px;margin:auto}
+h1{font-size:23px;font-weight:800;margin:0;color:var(--ac)}
+header span{color:var(--mu);font-size:13px}
+nav{display:flex;gap:2px;overflow-x:auto;padding:6px 16px;max-width:1040px;margin:auto;border-bottom:2px solid var(--bd)}
+nav button{background:none;border:0;padding:8px 12px;font:500 15px Tajawal,Tahoma,sans-serif;color:var(--mu);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-8px}
+nav button.on{color:var(--ac);border-color:var(--ac);font-weight:700}
+main{max-width:1040px;margin:auto;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.grid .box{margin:0}
+.box h2{font-size:17px;margin:0 0 10px}
+.k{color:var(--mu);font-size:13px}.v{font-size:21px;font-weight:800}
+.pos{color:var(--ok)}.neg,.warn{color:var(--no)}.warn{font-weight:700}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-bottom:10px}
+.row label{display:flex;flex-direction:column;font-size:13px;color:var(--mu);gap:3px;flex:1;min-width:120px}
+input,select{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:7px 9px;width:100%}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.btn{background:var(--ac);color:var(--on);border:0;border-radius:7px;padding:9px 16px;font:700 14px Tajawal,Tahoma,sans-serif;cursor:pointer}
+.btn.s{background:none;color:var(--ac);border:1px solid var(--ac);padding:4px 10px}
+.btn.d{background:none;color:var(--no);border:1px solid var(--no);padding:4px 10px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:right;padding:7px 6px;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{color:var(--mu);font-weight:500;font-size:13px}
+.empty{color:var(--mu);padding:8px 0}
+.tot{font-size:17px;font-weight:800;margin:8px 0}
+.tag{font-size:12px;padding:1px 8px;border-radius:9px;border:1px solid var(--bd);color:var(--mu)}
+details{margin:2px 0}summary{cursor:pointer;color:var(--ac)}
+</style>
+</head>
+<body>
+<header><h1>نظام رياض المحاسبي للمخبز <span style="font-size:13px;background:var(--ac2);color:#1d2a27;border-radius:10px;padding:1px 10px;vertical-align:middle">نسخة تجريبية</span></h1><span>قيد مزدوج — العملة: ريال يمني — بيانات وهمية تُعاد ضبطها دوريًا، فلا تُدخل بيانات حقيقية</span></header>
+<nav id="nav"></nav>
+<main id="app"></main>
+<script>
+var TABS=[['dash','الرئيسية'],['je','القيود اليومية'],['vo','سندات القبض والصرف'],['s','المبيعات'],['b','المشتريات'],['par','العملاء والموردون'],['inv','المخزون'],['rep','التقارير والحسابات'],['chk','الشيكات'],['usr','المستخدمون والصلاحيات'],['emp','الموظفون والرواتب'],['wh','المخازن والجرد'],['po','أوامر الشراء والاستلام'],['per','الفترات المحاسبية'],['cur','العملات']];
+var ROLES={'مدير':'*','محاسب':'dash,je,vo,s,b,par,inv,rep,chk,emp,wh,po,per,cur','أمين صندوق':'dash,vo,chk,par','مبيعات':'dash,s,par','مشتريات ومخزن':'dash,b,inv,par,wh,po'};
+var PM=[['نقدًا','1101'],['تحويل بنكي','1102'],['محفظة إلكترونية','1103']];
+var DA=[['1101','الصندوق','a'],['1102','حساب البنك','a'],['1103','المحفظة الإلكترونية','a'],['1201','العملاء','a'],['1301','مخزون المواد الخام','a'],['1302','مخزون المنتجات','a'],['2101','الموردون','l'],['2201','دفعات مقدمة من العملاء','l'],['3101','رأس المال','e'],['4101','إيرادات المبيعات','r'],['4201','إيرادات أخرى','r'],['5101','تكلفة المبيعات','x'],['5201','الرواتب','x'],['5202','الإيجار','x'],['5203','كهرباء ووقود','x'],['5204','مصروفات أخرى','x']];
+var VT=[['تحصيل من عميل','in','1201',1],['دفعة مقدمة من عميل','in','2201',1],['إيراد آخر','in','4201',0],['تمويل من المالك','in','3101',0],['سداد مورد','out','2101',1],['مصروف','out','X',0]];
+var S={acc:DA.map(function(a){return{c:a[0],n:a[1],t:a[2]}}),ent:[],par:[],itm:[],inv:[],log:[],seq:0,users:[],chk:[],emp:[],pay:[],wh:[],mv:[],per:[],cur:[],po:[]};
+
+var tab='dash',cart={s:[],b:[]},jl=[],stm='',CU=null;
+[['1104','شيكات تحت التحصيل','a'],['2102','شيكات مستحقة الدفع','l'],['1205','سلف الموظفين','a'],['2301','رواتب مستحقة','l'],['5205','فروقات وتالف المخزون','x']].forEach(function(a){if(!S.acc.some(function(x){return x.c==a[0]}))S.acc.push({c:a[0],n:a[1],t:a[2]})});S.acc.sort(function(a,b){return a.c<b.c?-1:1});
+function save(){}
+function $(i){return document.getElementById(i)}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function n(x){return Number(x||0).toLocaleString('en',{maximumFractionDigits:2})}
+function m(x){return n(x)+' ر.ي'}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function val(i){return $(i).value}
+function num(i){return parseFloat($(i).value)||0}
+function sum(a,f){return a.reduce(function(t,x){return t+f(x)},0)}
+function empty(t){return '<div class="empty">'+t+'</div>'}
+function B(t,f,i,c){return '<button class="btn '+(c||'s')+'" data-i="'+esc(i)+'" onclick="'+f+'(this.dataset.i)">'+t+'</button>'}
+function opts(a,v,l,sel){return a.map(function(x){return '<option value="'+esc(v(x))+'"'+(v(x)==sel?' selected':'')+'>'+esc(l(x))+'</option>'}).join('')}
+function accOpts(t,sel){return opts(S.acc.filter(function(a){return!t||t.indexOf(a.t)>=0}),function(a){return a.c},function(a){return a.c+' — '+a.n},sel)}
+function pname(id){var p=S.par.find(function(x){return x.id==id});return p?p.n:''}
+function log(t){S.log.push({t:new Date().toLocaleString('en-GB'),x:(CU?CU.n+': ':'')+t})}
+function bal(c){var t=0;S.ent.forEach(function(e){if(e.st=='مرحّل')e.l.forEach(function(l){if(l.a==c)t+=l.d-l.r})});return t}
+function mk(desc,ref,lines,ty,date){var mo=(date||today()).slice(0,7);if(S.per.some(function(p){return p.m==mo&&p.c}))throw new Error('CLOSED:'+mo);var e={id:uid(),no:++S.seq,date:date||today(),ty:ty||'آلي',desc:desc,ref:ref||'',st:'مرحّل',l:lines.filter(function(l){return l[1]||l[2]}).map(function(l){return{a:l[0],d:+l[1]||0,r:+l[2]||0,p:l[3]||'',x:l[4]||''}})};S.ent.push(e);log('قيد رقم '+e.no+': '+desc);return e}
+function nav(){$('nav').innerHTML=TABS.filter(function(t){return can(t[0])}).map(function(t){return '<button class="'+(t[0]==tab?'on':'')+'" onclick="go(\''+t[0]+'\')">'+t[1]+'</button>'}).join('')}
+function go(t){tab=t;render()}
+function can(t){if(!CU)return false;var r=ROLES[CU.role]||'';return r=='*'||r.split(',').indexOf(t)>=0}
+function render(){if(!CU){$('nav').innerHTML='';return login()}if(!can(tab))tab='dash';nav();$('nav').insertAdjacentHTML('beforeend','<button onclick="refresh()" style="margin-inline-start:auto">⟳ تحديث</button><button onclick="logout()">خروج — '+esc(CU.n)+'</button>');({dash:dash,je:je,vo:vo,s:function(){invs('s')},b:function(){invs('b')},par:par,inv:inv,rep:rep,chk:chk,usr:usr,emp:emp,wh:wh,po:po,per:per,cur:cur})[tab]()}
+function typeSum(t){return sum(S.acc.filter(function(a){return a.t==t}),function(a){return bal(a.c)})}
+
+/* الرئيسية */
+function dash(){
+ var profit=-typeSum('r')-typeSum('x'),low=S.itm.filter(function(i){return i.q<=i.min});
+ var c=[['الصندوق',bal('1101')],['البنك',bal('1102')],['المحفظة الإلكترونية',bal('1103')],['ذمم العملاء',bal('1201')+bal('2201')],['مستحقات الموردين',-bal('2101')],['قيمة المخزون',bal('1301')+bal('1302')],['صافي الربح',profit]];
+ $('app').innerHTML='<div class="grid">'+c.map(function(x){return '<div class="box"><div class="k">'+x[0]+'</div><div class="v '+(x[1]<0?'neg':'')+'">'+m(x[1])+'</div></div>'}).join('')+'</div>'+
+ '<div class="box"><h2>تنبيهات المخزون</h2>'+(low.length?low.map(function(i){return '<div class="warn">'+esc(i.n)+': المتبقي '+n(i.q)+' '+esc(i.u)+(i.q<=0?' (نفد)':' (وصل لحد إعادة الطلب)')+'</div>'}).join(''):empty('لا توجد أصناف وصلت لحد إعادة الطلب.'))+'</div>'+
+ '<div class="box"><h2>ابدأ من هنا</h2><div class="empty">1) سجّل رأس المال من «سندات القبض والصرف» (تمويل من المالك). 2) أضف الأصناف من «المخزون». 3) أضف العملاء والموردين. 4) سجّل المشتريات ثم الإنتاج ثم المبيعات.</div></div>'}
+
+/* القيود اليومية */
+function je(){
+ if(!jl.length)jl=[{a:'1101',x:'',d:'',r:''},{a:'4201',x:'',d:'',r:''}];
+ var L=S.ent.slice().reverse().slice(0,30);
+ $('app').innerHTML='<div class="box"><h2>قيد يومي جديد</h2><div class="row"><label>التاريخ<input id="jd" type="date" value="'+today()+'"></label><label style="flex:3">البيان العام<input id="jn"></label></div><div class="tw"><table id="jt"></table></div><div class="row"><button class="btn s" onclick="jl.push({a:\'1101\',x:\'\',d:\'\',r:\'\'});jrows()">+ سطر</button></div><div class="tot" id="jtot"></div><button class="btn" onclick="jsave(false)">حفظ كمسودة</button> <button class="btn" onclick="jsave(true)">حفظ وترحيل</button></div>'+
+ '<div class="box"><h2>سجل القيود</h2>'+(L.length?'<div class="tw"><table><tr><th>الرقم</th><th>التاريخ</th><th>النوع</th><th>البيان</th><th>المبلغ</th><th>الحالة</th><th></th></tr>'+L.map(function(e){var t=sum(e.l,function(l){return l.d});return '<tr><td>'+e.no+'</td><td>'+e.date+'</td><td>'+esc(e.ty)+'</td><td><details><summary>'+esc(e.desc)+'</summary>'+e.l.map(function(l){return '<div class="k">'+esc(aname(l.a))+' — مدين '+n(l.d)+' / دائن '+n(l.r)+(l.p?' ('+esc(pname(l.p))+')':'')+'</div>'}).join('')+'</details></td><td>'+n(t)+'</td><td><span class="tag">'+(e.rev?'معكوس':e.st)+'</span></td><td>'+(e.st=='مسودة'?B('ترحيل','jpost',e.id)+' '+B('حذف','jdel',e.id,'d'):(e.rev||e.ty=='عكس'?'':B('عكس القيد','jrev',e.id,'d')))+'</td></tr>'}).join('')+'</table></div>':empty('لا توجد قيود بعد.'))+'</div>';jrows()}
+function aname(c){var a=S.acc.find(function(x){return x.c==c});return a?c+' '+a.n:c}
+function jrows(){$('jt').innerHTML='<tr><th>الحساب</th><th>البيان</th><th>مدين</th><th>دائن</th><th></th></tr>'+jl.map(function(l,i){return '<tr><td><select onchange="jl['+i+'].a=this.value">'+accOpts('',l.a)+'</select></td><td><input value="'+esc(l.x)+'" oninput="jl['+i+'].x=this.value"></td><td><input type="number" min="0" value="'+esc(l.d)+'" oninput="jl['+i+'].d=this.value;jtot()"></td><td><input type="number" min="0" value="'+esc(l.r)+'" oninput="jl['+i+'].r=this.value;jtot()"></td><td>'+(jl.length>2?'<button class="btn d" onclick="jl.splice('+i+',1);jrows()">×</button>':'')+'</td></tr>'}).join('');jtot()}
+function jtot(){var d=sum(jl,function(l){return+l.d||0}),r=sum(jl,function(l){return+l.r||0});$('jtot').innerHTML='مدين '+n(d)+' — دائن '+n(r)+' — <span class="'+(Math.abs(d-r)<0.005&&d>0?'pos':'neg')+'">'+(Math.abs(d-r)<0.005&&d>0?'القيد متوازن':'الفرق '+n(d-r))+'</span>'}
+function jsave(post){var d=sum(jl,function(l){return+l.d||0}),r=sum(jl,function(l){return+l.r||0});
+ if(post&&(Math.abs(d-r)>=0.005||d<=0)){alert('لا يمكن ترحيل قيد غير متوازن.');return}
+ if(!val('jn').trim()){alert('اكتب البيان العام للقيد.');return}
+ var e=mk(val('jn'),'',jl.map(function(l){return[l.a,l.d,l.r,'',l.x]}),'يدوي',val('jd'));if(!post)e.st='مسودة';jl=[];save();je()}
+function jpost(id){var e=S.ent.find(function(x){return x.id==id}),d=sum(e.l,function(l){return l.d}),r=sum(e.l,function(l){return l.r});if(Math.abs(d-r)>=0.005){alert('القيد غير متوازن.');return}e.st='مرحّل';log('ترحيل قيد '+e.no);save();je()}
+function jdel(id){S.ent=S.ent.filter(function(x){return x.id!=id});save();je()}
+function jrev(id){var e=S.ent.find(function(x){return x.id==id});mk('عكس القيد رقم '+e.no+': '+e.desc,e.ref,e.l.map(function(l){return[l.a,l.r,l.d,l.p,l.x]}),'عكس');e.rev=true;save();je()}
+
+/* السندات */
+function vo(){
+ var L=S.ent.filter(function(e){return e.ty.indexOf('سند')==0}).reverse().slice(0,15);
+ $('app').innerHTML='<div class="box"><h2>سند قبض / صرف</h2><div class="row"><label>نوع العملية<select id="vt">'+VT.map(function(t,i){return '<option value="'+i+'">'+(t[1]=='in'?'قبض — ':'صرف — ')+t[0]+'</option>'}).join('')+'</select></label><label>وسيلة الدفع<select id="vm">'+opts(PM,function(p){return p[1]},function(p){return p[0]})+'</select></label><label>المبلغ<input id="va" type="number" min="0"></label></div><div class="row"><label>العميل / المورد<select id="vp"><option value="">—</option>'+opts(S.par,function(p){return p.id},function(p){return p.n+(p.t=='c'?' (عميل)':' (مورد)')})+'</select></label><label>حساب المصروف (لنوع مصروف)<select id="vx">'+accOpts('x')+'</select></label><label>البيان<input id="vn"></label><button class="btn" onclick="vsave()">حفظ السند</button></div></div>'+
+ '<div class="box"><h2>آخر السندات</h2>'+(L.length?'<div class="tw"><table><tr><th>الرقم</th><th>التاريخ</th><th>النوع</th><th>البيان</th><th>المبلغ</th></tr>'+L.map(function(e){return '<tr><td>'+e.no+'</td><td>'+e.date+'</td><td>'+esc(e.ty)+'</td><td>'+esc(e.desc)+'</td><td>'+n(sum(e.l,function(l){return l.d}))+'</td></tr>'}).join('')+'</table></div>':empty('لا توجد سندات بعد.'))+'</div>'}
+function vsave(){var t=VT[val('vt')],a=num('va'),p=val('vp'),mm=val('vm'),acc=t[2]=='X'?val('vx'):t[2];
+ if(a<=0){alert('أدخل مبلغًا صحيحًا.');return}
+ if(t[3]&&!p){alert('اختر العميل أو المورد لهذا النوع.');return}
+ if(t[1]=='out'&&bal(mm)<a&&!confirm('رصيد الحساب المختار أقل من المبلغ. هل تريد المتابعة؟'))return;
+ var d=(val('vn')||t[0])+(p?' — '+pname(p):'');
+ mk(d,'',t[1]=='in'?[[mm,a,0],[acc,0,a,p]]:[[acc,a,0,p],[mm,0,a]],t[1]=='in'?'سند قبض':'سند صرف');save();vo()}
+
+/* الفواتير: s مبيعات، b مشتريات */
+function invs(k){
+ var s=k=='s',its=S.itm.filter(function(i){return i.t==(s?'p':'r')}),ps=S.par.filter(function(p){return p.t==(s?'c':'s')}),L=S.inv.filter(function(x){return x.k==k}).reverse().slice(0,12);
+ $('app').innerHTML='<div class="box"><h2>'+(s?'فاتورة مبيعات':'فاتورة مشتريات مواد خام')+'</h2>'+(its.length?'<div class="row"><label>'+(s?'العميل (اختياري للبيع الكامل نقدًا)':'المورد')+'<select id="ip"><option value="">—</option>'+opts(ps,function(p){return p.id},function(p){return p.n})+'</select></label><label>الصنف<select id="ii">'+opts(its,function(i){return i.id},function(i){return i.n+' (متوفر '+n(i.q)+')'})+'</select></label><label>الكمية<input id="iq" type="number" min="0" value="1"></label><label>'+(s?'سعر البيع':'سعر الشراء')+'<input id="ipr" type="number" min="0"></label><button class="btn s" onclick="iadd(\''+k+'\')">أضف</button></div>':empty('أضف أصنافًا من نوع '+(s?'«منتج»':'«مادة خام»')+' في صفحة المخزون أولًا.'))+'<div id="ic"></div></div>'+
+ '<div class="box"><h2>آخر الفواتير</h2>'+(L.length?'<div class="tw"><table><tr><th>الرقم</th><th>التاريخ</th><th>الطرف</th><th>الإجمالي</th><th>المدفوع</th><th>الآجل</th></tr>'+L.map(function(x){return '<tr><td>'+x.no+'</td><td>'+x.date+'</td><td>'+esc(pname(x.p)||'نقدي')+'</td><td>'+m(x.tot)+'</td><td>'+m(x.paid)+'</td><td>'+m(x.tot-x.paid)+'</td></tr>'}).join('')+'</table></div>':empty('لا توجد فواتير بعد.'))+'</div>';if(its.length)icart(k)}
+function iadd(k){var i=S.itm.find(function(x){return x.id==val('ii')}),q=num('iq'),pr=num('ipr');if(!i||q<=0)return;if(!pr)pr=k=='s'?i.pr:i.c;
+ var used=sum(cart[k].filter(function(c){return c.id==i.id}),function(c){return c.q});
+ if(k=='s'&&used+q>i.q){alert('المتوفر من '+i.n+' هو '+n(i.q-used)+' فقط.');return}
+ cart[k].push({id:i.id,n:i.n,q:q,pr:pr});icart(k)}
+function icart(k){var c=cart[k],t=sum(c,function(x){return x.q*x.pr});
+ $('ic').innerHTML=c.length?'<div class="tw"><table><tr><th>الصنف</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th><th></th></tr>'+c.map(function(x,i){return '<tr><td>'+esc(x.n)+'</td><td>'+n(x.q)+'</td><td>'+n(x.pr)+'</td><td>'+n(x.q*x.pr)+'</td><td><button class="btn d" onclick="cart[\''+k+'\'].splice('+i+',1);icart(\''+k+'\')">×</button></td></tr>'}).join('')+'</table></div><div class="tot">الإجمالي: '+m(t)+'</div><div class="row">'+PM.map(function(p,i){return '<label>'+(k=='s'?'مقبوض ':'مدفوع ')+p[0]+'<input id="pm'+i+'" type="number" min="0" oninput="irem(\''+k+'\')"></label>'}).join('')+'</div><div class="tot" id="ir"></div><button class="btn" onclick="isave(\''+k+'\')">حفظ الفاتورة</button>':empty('أضف أصنافًا للفاتورة.');if(c.length)irem(k)}
+function irem(k){var t=sum(cart[k],function(x){return x.q*x.pr}),p=sum(PM,function(x,i){return 0});p=0;PM.forEach(function(x,i){p+=num('pm'+i)});$('ir').innerHTML='المتبقي آجلًا على '+(k=='s'?'العميل':'المورد')+': <span class="'+(t-p<0?'neg':'')+'">'+m(t-p)+'</span>'}
+function isave(k){var s=k=='s',c=cart[k],tot=sum(c,function(x){return x.q*x.pr}),pay=PM.map(function(p,i){return[p[1],num('pm'+i)]}),paid=sum(pay,function(p){return p[1]}),rem=tot-paid,p=val('ip');
+ if(!c.length)return;if(paid>tot+0.005){alert('المبلغ المسدد أكبر من إجمالي الفاتورة.');return}
+ if(rem>0.005&&!p){alert('اختر '+(s?'العميل':'المورد')+' لتسجيل المتبقي آجلًا.');return}
+ var no=(s?'ب-':'ش-')+(S.inv.filter(function(x){return x.k==k}).length+1),L=[];
+ if(s){var cg=0;c.forEach(function(x){var i=S.itm.find(function(y){return y.id==x.id});cg+=x.q*i.c;i.q-=x.q});
+  pay.forEach(function(q){L.push([q[0],q[1],0])});L.push(['1201',rem,0,p],['4101',0,tot],['5101',cg,0],['1302',0,cg])}
+ else{c.forEach(function(x){var i=S.itm.find(function(y){return y.id==x.id});i.c=(i.q*i.c+x.q*x.pr)/(i.q+x.q);i.q+=x.q});
+  L.push(['1301',tot,0]);pay.forEach(function(q){L.push([q[0],0,q[1]])});L.push(['2101',0,rem,p])}
+ mk((s?'فاتورة مبيعات ':'فاتورة مشتريات ')+no+(p?' — '+pname(p):''),no,L,'آلي');
+ S.inv.push({k:k,no:no,date:today(),p:p,tot:tot,paid:paid});cart[k]=[];save();invs(k)}
+
+/* العملاء والموردون */
+function pbal(p){return p.t=='c'?sum(S.ent,function(e){return e.st=='مرحّل'?sum(e.l.filter(function(l){return l.p==p.id}),function(l){return l.d-l.r}):0}):sum(S.ent,function(e){return e.st=='مرحّل'?sum(e.l.filter(function(l){return l.p==p.id}),function(l){return l.r-l.d}):0})}
+function par(){
+ $('app').innerHTML='<div class="box"><h2>إضافة عميل أو مورد</h2><div class="row"><label>الاسم<input id="pn"></label><label>النوع<select id="pt"><option value="c">عميل</option><option value="s">مورد</option></select></label><label>الهاتف<input id="ph"></label><button class="btn" onclick="padd()">إضافة</button></div></div>'+
+ '<div class="box"><h2>الأرصدة</h2>'+(S.par.length?'<div class="tw"><table><tr><th>الاسم</th><th>النوع</th><th>الهاتف</th><th>الرصيد</th><th></th></tr>'+S.par.map(function(p){var b=pbal(p);return '<tr><td>'+esc(p.n)+'</td><td>'+(p.t=='c'?'عميل':'مورد')+'</td><td>'+esc(p.h)+'</td><td class="'+(b<0?'neg':'')+'">'+m(b)+'<span class="k"> '+(p.t=='c'?(b>=0?'(عليه)':'(له)'):(b>=0?'(له)':'(عليه)'))+'</span></td><td>'+B('كشف حساب','pst',p.id)+'</td></tr>'}).join('')+'</table></div>':empty('لم تُضف جهات بعد.'))+'</div><div id="st"></div>';if(stm)pst(stm)}
+function padd(){var nm=val('pn').trim();if(!nm)return;S.par.push({id:uid(),n:nm,t:val('pt'),h:val('ph')});save();par()}
+function pst(id){stm=id;var p=S.par.find(function(x){return x.id==id}),run=0,rows=[];
+ S.ent.filter(function(e){return e.st=='مرحّل'}).forEach(function(e){e.l.filter(function(l){return l.p==id}).forEach(function(l){run+=p.t=='c'?l.d-l.r:l.r-l.d;rows.push('<tr><td>'+e.date+'</td><td>'+e.no+'</td><td>'+esc(e.desc)+'</td><td>'+n(l.d)+'</td><td>'+n(l.r)+'</td><td>'+n(run)+'</td></tr>')})});
+ $('st').innerHTML='<div class="box"><h2>كشف حساب: '+esc(p.n)+'</h2>'+(rows.length?'<div class="tw"><table><tr><th>التاريخ</th><th>القيد</th><th>البيان</th><th>مدين</th><th>دائن</th><th>الرصيد</th></tr>'+rows.join('')+'</table></div>':empty('لا توجد حركات.'))+'</div>'}
+
+/* المخزون */
+function inv(){
+ var T=S.itm,val_=sum(T,function(i){return i.q*i.c});
+ $('app').innerHTML='<div class="grid"><div class="box"><div class="k">عدد الأصناف</div><div class="v">'+T.length+'</div></div><div class="box"><div class="k">وصلت لحد إعادة الطلب</div><div class="v warn">'+T.filter(function(i){return i.q>0&&i.q<=i.min}).length+'</div></div><div class="box"><div class="k">نفدت</div><div class="v warn">'+T.filter(function(i){return i.q<=0}).length+'</div></div><div class="box"><div class="k">قيمة المخزون</div><div class="v">'+m(val_)+'</div></div></div>'+
+ '<div class="box"><h2>صنف جديد</h2><div class="row"><label>الاسم<input id="in"></label><label>النوع<select id="it"><option value="r">مادة خام</option><option value="p">منتج يصنعه المخبز</option></select></label><label>الوحدة<input id="iu" placeholder="كجم / قطعة"></label><label>سعر البيع<input id="ip2" type="number" min="0"></label><label>حد إعادة الطلب<input id="im" type="number" min="0" value="0"></label><button class="btn" onclick="iaddItem()">إضافة</button></div></div>'+
+ '<div class="box"><h2>دليل الأصناف</h2>'+(T.length?'<div class="tw"><table><tr><th>الصنف</th><th>النوع</th><th>الرصيد</th><th>متوسط التكلفة</th><th>سعر البيع</th><th>القيمة</th></tr>'+T.map(function(i){return '<tr><td>'+esc(i.n)+'</td><td>'+(i.t=='r'?'مادة خام':'منتج')+'</td><td class="'+(i.q<=i.min?'warn':'')+'">'+n(i.q)+' '+esc(i.u)+'</td><td>'+n(i.c)+'</td><td>'+(i.t=='p'?n(i.pr):'—')+'</td><td>'+n(i.q*i.c)+'</td></tr>'}).join('')+'</table></div>':empty('أضف الأصناف ثم سجّل مشترياتك.'))+'</div>'+
+ '<div class="box"><h2>تسجيل إنتاج</h2><div class="row"><label>المنتج<select id="xp">'+opts(T.filter(function(i){return i.t=='p'}),function(i){return i.id},function(i){return i.n})+'</select></label><label>الكمية المنتجة<input id="xq" type="number" min="0"></label><label>المادة الخام المستهلكة<select id="xr">'+opts(T.filter(function(i){return i.t=='r'}),function(i){return i.id},function(i){return i.n+' ('+n(i.q)+')'})+'</select></label><label>كمية المادة المستهلكة<input id="xu" type="number" min="0"></label><button class="btn" onclick="xmake()">تسجيل</button></div><div class="k">تُحسب تكلفة الإنتاج بمتوسط تكلفة المادة الخام وتُنقل من مخزون المواد الخام إلى مخزون المنتجات.</div></div>'}
+function iaddItem(){var nm=val('in').trim();if(!nm)return;S.itm.push({id:uid(),n:nm,t:val('it'),u:val('iu')||'وحدة',q:0,c:0,pr:num('ip2'),min:num('im')});save();inv()}
+function xmake(){var p=S.itm.find(function(i){return i.id==val('xp')}),r=S.itm.find(function(i){return i.id==val('xr')}),q=num('xq'),u=num('xu');
+ if(!p||!r||q<=0||u<=0)return;if(u>r.q){alert('المتوفر من '+r.n+' هو '+n(r.q)+' فقط.');return}
+ var cost=u*r.c;r.q-=u;p.c=(p.q*p.c+cost)/(p.q+q);p.q+=q;mk('إنتاج '+n(q)+' '+p.n+' باستهلاك '+n(u)+' '+r.n,'',[['1302',cost,0],['1301',0,cost]]);save();inv()}
+
+/* التقارير والحسابات */
+function rep(){
+ var rows=S.acc.map(function(a){var b=bal(a.c);return{a:a,b:b}}),D=sum(rows,function(x){return x.b>0?x.b:0}),C=sum(rows,function(x){return x.b<0?-x.b:0});
+ var rev=rows.filter(function(x){return x.a.t=='r'}),ex=rows.filter(function(x){return x.a.t=='x'}),ni=-typeSum('r')-typeSum('x');
+ function line(a,b){return '<tr><td>'+a+'</td><td>'+m(b)+'</td></tr>'}
+ var as=typeSum('a'),li=-typeSum('l'),eq=-typeSum('e');
+ $('app').innerHTML='<div class="box"><h2>ميزان المراجعة</h2><div class="tw"><table><tr><th>الحساب</th><th>مدين</th><th>دائن</th></tr>'+rows.map(function(x){return '<tr><td>'+esc(x.a.c+' — '+x.a.n)+'</td><td>'+(x.b>0?n(x.b):'')+'</td><td>'+(x.b<0?n(-x.b):'')+'</td></tr>'}).join('')+'<tr><th>الإجمالي</th><th>'+n(D)+'</th><th>'+n(C)+'</th></tr></table></div><div class="tot '+(Math.abs(D-C)<0.01?'pos':'neg')+'">'+(Math.abs(D-C)<0.01?'الميزان متوازن':'الميزان غير متوازن')+'</div></div>'+
+ '<div class="box"><h2>قائمة الدخل</h2><table>'+rev.map(function(x){return line(esc(x.a.n),-x.b)}).join('')+ex.map(function(x){return line(esc(x.a.n),-x.b)}).join('')+'<tr><th>صافي الربح</th><th class="'+(ni>=0?'pos':'neg')+'">'+m(ni)+'</th></tr></table></div>'+
+ '<div class="box"><h2>المركز المالي</h2><table>'+line('إجمالي الأصول',as)+line('إجمالي الالتزامات',li)+line('حقوق الملكية (مع أرباح الفترة)',eq+ni)+'</table></div>'+
+ '<div class="box"><h2>شجرة الحسابات</h2><div class="row"><label>الرمز<input id="ac"></label><label>الاسم<input id="an"></label><label>النوع<select id="at"><option value="a">أصل</option><option value="l">التزام</option><option value="e">حقوق ملكية</option><option value="r">إيراد</option><option value="x">مصروف</option></select></label><button class="btn" onclick="aadd()">إضافة حساب</button></div></div>'+
+ '<div class="box"><h2>سجل التدقيق</h2>'+(S.log.length?'<div class="tw"><table>'+S.log.slice(-25).reverse().map(function(l){return '<tr><td class="k">'+l.t+'</td><td>'+esc(l.x)+'</td></tr>'}).join('')+'</table></div>':empty('لا توجد عمليات مسجلة.'))+'</div>'}
+function aadd(){var c=val('ac').trim(),nm=val('an').trim();if(!c||!nm)return;if(S.acc.some(function(a){return a.c==c})){alert('رمز الحساب مستخدم من قبل.');return}S.acc.push({c:c,n:nm,t:val('at')});S.acc.sort(function(a,b){return a.c<b.c?-1:1});log('إضافة حساب '+c+' '+nm);save();rep()}
+/* الدخول والمستخدمون */
+async function sha(s){try{var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('riyad:'+s));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('')}catch(e){return 'x'+btoa(unescape(encodeURIComponent(s)))}}
+function login(){var f=!S.users.length;
+ $('app').innerHTML='<div class="box" style="max-width:400px;margin:30px auto"><h2>'+(f?'إنشاء حساب المدير (أول استخدام)':'تسجيل الدخول')+'</h2>'+(f?'<div class="row"><label>الاسم الظاهر<input id="lnm"></label></div>':'')+'<div class="row"><label>اسم الدخول<input id="lu" autocomplete="username"></label></div><div class="row"><label>كلمة المرور<input id="lp" type="password" autocomplete="current-password" onkeydown="if(event.key==\'Enter\')doLogin()"></label></div><div class="warn" id="lm"></div><button class="btn" onclick="doLogin()">'+(f?'إنشاء ودخول':'دخول')+'</button></div>'}
+function lmsg(t){$('lm').textContent=t}
+async function doLogin(){var u=val('lu').trim(),p=val('lp'),now=new Date().toLocaleString('en-GB');
+ if(!S.users.length){var nm=val('lnm').trim();if(!u||!nm||p.length<4){lmsg('أدخل الاسم واسم الدخول وكلمة مرور من 4 أحرف على الأقل.');return}
+  var us={id:uid(),u:u,n:nm,role:'مدير',on:true,h:await sha(p),at:now};S.users.push(us);CU=us;log('إنشاء حساب المدير');save();return render()}
+ var x=S.users.find(function(y){return y.u==u});
+ if(!x||x.h!=await sha(p)){lmsg('اسم الدخول أو كلمة المرور غير صحيحة.');return}
+ if(!x.on){lmsg('هذا الحساب معطل. راجع المدير.');return}
+ CU=x;x.last=now;log('تسجيل دخول');save();render()}
+function logout(){log('تسجيل خروج');CU=null;render()}
+function usr(){
+ var scr={};TABS.forEach(function(t){scr[t[0]]=t[1]});
+ $('app').innerHTML='<div class="box"><h2>مستخدم جديد</h2><div class="row"><label>الاسم الظاهر<input id="un"></label><label>اسم الدخول<input id="uu"></label><label>كلمة المرور<input id="up" type="password"></label><label>الدور<select id="ur">'+opts(Object.keys(ROLES),function(r){return r},function(r){return r},'محاسب')+'</select></label><button class="btn" onclick="uadd()">إضافة</button></div></div>'+
+ '<div class="box"><h2>المستخدمون</h2><div class="tw"><table><tr><th>الاسم</th><th>اسم الدخول</th><th>الدور</th><th>الحالة</th><th>آخر دخول</th><th>كلمة مرور جديدة</th><th></th></tr>'+S.users.map(function(u){var me=u.id==CU.id;return '<tr><td>'+esc(u.n)+'</td><td>'+esc(u.u)+'</td><td><select onchange="urole(\''+u.id+'\',this.value)"'+(me?' disabled':'')+'>'+opts(Object.keys(ROLES),function(r){return r},function(r){return r},u.role)+'</select></td><td><span class="tag">'+(u.on?'نشط':'معطل')+'</span></td><td class="k">'+esc(u.last||'—')+'</td><td><input id="rp'+u.id+'" type="password" style="width:110px"> '+B('تعيين','upw',u.id)+'</td><td>'+(me?'':B(u.on?'تعطيل':'تفعيل','utog',u.id,u.on?'d':'s'))+'</td></tr>'}).join('')+'</table></div><div class="k">التعطيل يمنع الدخول فقط، وتبقى كل عمليات المستخدم السابقة في السجل.</div></div>'+
+ '<div class="box"><h2>صلاحيات الأدوار</h2><table>'+Object.keys(ROLES).map(function(r){return '<tr><td><b>'+r+'</b></td><td>'+(ROLES[r]=='*'?'كل الشاشات وإدارة المستخدمين':ROLES[r].split(',').map(function(c){return scr[c]}).join('، '))+'</td></tr>'}).join('')+'</table><div class="k" style="margin-top:8px">تنبيه: الدخول والصلاحيات هنا تعمل داخل المتصفح فقط وتنظّم الاستخدام، ولا تحمي البيانات من شخص يفتح المتصفح نفسه. الحماية الحقيقية تحتاج Supabase Auth وسياسات قاعدة البيانات كما في الدراسة.</div></div>'}
+async function uadd(){var nm=val('un').trim(),u=val('uu').trim(),p=val('up');if(!nm||!u||p.length<4){alert('أدخل الاسم واسم الدخول وكلمة مرور من 4 أحرف على الأقل.');return}
+ if(S.users.some(function(x){return x.u==u})){alert('اسم الدخول مستخدم من قبل.');return}
+ S.users.push({id:uid(),u:u,n:nm,role:val('ur'),on:true,h:await sha(p),at:new Date().toLocaleString('en-GB')});log('إضافة مستخدم '+u+' بدور '+val('ur'));save();usr()}
+function urole(id,r){var u=S.users.find(function(x){return x.id==id});u.role=r;log('تغيير دور '+u.u+' إلى '+r);save();usr()}
+function utog(id){var u=S.users.find(function(x){return x.id==id});u.on=!u.on;log((u.on?'تفعيل ':'تعطيل ')+u.u);save();usr()}
+async function upw(id){var p=val('rp'+id);if(p.length<4){alert('كلمة المرور 4 أحرف على الأقل.');return}var u=S.users.find(function(x){return x.id==id});u.h=await sha(p);log('تغيير كلمة مرور '+u.u);save();usr();alert('تم تغيير كلمة المرور.')}
+
+/* الشيكات */
+function chk(){
+ var L=S.chk.slice().reverse(),t=today(),pin=sum(S.chk.filter(function(c){return c.d=='in'&&c.st=='تحت التحصيل'}),function(c){return c.a}),pout=sum(S.chk.filter(function(c){return c.d=='out'&&c.st=='صادر'}),function(c){return c.a});
+ $('app').innerHTML='<div class="grid"><div class="box"><div class="k">شيكات تحت التحصيل</div><div class="v">'+m(pin)+'</div></div><div class="box"><div class="k">شيكات صادرة لم تُصرف</div><div class="v">'+m(pout)+'</div></div></div>'+
+ '<div class="box"><h2>تسجيل شيك</h2><div class="row"><label>النوع<select id="cd"><option value="in">مستلم من عميل</option><option value="out">صادر لمورد</option></select></label><label>رقم الشيك<input id="cn"></label><label>البنك<input id="cb"></label><label>العميل / المورد<select id="cp">'+opts(S.par,function(p){return p.id},function(p){return p.n+(p.t=='c'?' (عميل)':' (مورد)')})+'</select></label><label>المبلغ<input id="ca" type="number" min="0"></label><label>تاريخ الاستحقاق<input id="cu" type="date" value="'+t+'"></label><button class="btn" onclick="cadd()">حفظ</button></div></div>'+
+ '<div class="box"><h2>سجل الشيكات</h2>'+(L.length?'<div class="tw"><table><tr><th>النوع</th><th>الرقم</th><th>البنك</th><th>الطرف</th><th>المبلغ</th><th>الاستحقاق</th><th>الحالة</th><th></th></tr>'+L.map(function(c){var open=c.st=='تحت التحصيل'||c.st=='صادر';return '<tr><td>'+(c.d=='in'?'مستلم':'صادر')+'</td><td>'+esc(c.no)+'</td><td>'+esc(c.b)+'</td><td>'+esc(pname(c.p))+'</td><td>'+m(c.a)+'</td><td class="'+(open&&c.u<t?'warn':'')+'">'+c.u+(open&&c.u<t?' (متأخر)':'')+'</td><td><span class="tag">'+c.st+'</span></td><td>'+(open?(c.d=='in'?B('تحصيل','cclr',c.id)+' '+B('ارتجاع','cact',c.id,'d'):B('صرف','cclr',c.id)+' '+B('إلغاء','cact',c.id,'d')):'')+'</td></tr>'}).join('')+'</table></div>':empty('لا توجد شيكات مسجلة.'))+'</div>'}
+function cadd(){var a=num('ca'),p=val('cp'),d=val('cd'),no=val('cn').trim();if(a<=0||!p||!no){alert('أدخل رقم الشيك والمبلغ، واختر العميل أو المورد.');return}
+ var pt=S.par.find(function(x){return x.id==p});if((d=='in')!=(pt.t=='c')){alert(d=='in'?'الشيك المستلم يُسجَّل على عميل.':'الشيك الصادر يُسجَّل لمورد.');return}
+ S.chk.push({id:uid(),d:d,no:no,b:val('cb'),p:p,a:a,u:val('cu'),st:d=='in'?'تحت التحصيل':'صادر'});
+ if(d=='in')mk('استلام شيك رقم '+no+' من '+pt.n,'',[['1104',a,0],['1201',0,a,p]],'سند قبض');else mk('إصدار شيك رقم '+no+' إلى '+pt.n,'',[['2101',a,0,p],['2102',0,a]],'سند صرف');save();chk()}
+function cclr(id){var c=S.chk.find(function(x){return x.id==id});
+ if(c.d=='in'){mk('تحصيل شيك رقم '+c.no,'',[['1102',c.a,0],['1104',0,c.a]],'سند قبض');c.st='محصّل'}else{mk('صرف شيك رقم '+c.no,'',[['2102',c.a,0],['1102',0,c.a]],'سند صرف');c.st='مصروف'}save();chk()}
+function cact(id){var c=S.chk.find(function(x){return x.id==id});
+ if(c.d=='in'){mk('ارتجاع شيك رقم '+c.no+' — '+pname(c.p),'',[['1201',c.a,0,c.p],['1104',0,c.a]]);c.st='مرتجع'}else{mk('إلغاء شيك رقم '+c.no+' — '+pname(c.p),'',[['2102',c.a,0],['2101',0,c.a,c.p]]);c.st='ملغى'}save();chk()}
+
+/* الموظفون والرواتب */
+function ename(id){var e=S.emp.find(x=>x.id==id);return e?e.n:''}
+function sbal(id){return sum(S.ent,e=>e.st=='مرحّل'?sum(e.l.filter(l=>l.a=='1205'&&l.p==id),l=>l.d-l.r):0)}
+function emp(){
+ var mo=window._pm||today().slice(0,7),act=S.emp.filter(e=>e.on),pm=opts(PM,p=>p[1],p=>p[0]);
+ $('app').innerHTML='<div class="box"><h2>موظف جديد</h2><div class="row"><label>الاسم<input id="en"></label><label>الوظيفة<input id="ej"></label><label>الراتب الشهري<input id="es" type="number" min="0"></label><button class="btn" onclick="eadd()">إضافة</button></div></div>'+
+ '<div class="box"><h2>الموظفون والسلف</h2>'+(S.emp.length?'<div class="row"><label>وسيلة الصرف للسلف والرواتب<select id="sam">'+pm+'</select></label></div><div class="tw"><table><tr><th>الاسم</th><th>الوظيفة</th><th>الراتب</th><th>رصيد السلف</th><th>سلفة جديدة</th><th></th></tr>'+S.emp.map(e=>'<tr><td>'+esc(e.n)+(e.on?'':' <span class="tag">معطل</span>')+'</td><td>'+esc(e.j)+'</td><td><input id="se'+e.id+'" type="number" min="0" value="'+e.s+'" style="width:100px"> '+B('حفظ','esal',e.id)+'</td><td>'+m(sbal(e.id))+'</td><td>'+(e.on?'<input id="sa'+e.id+'" type="number" min="0" style="width:90px"> '+B('صرف','sadv',e.id):'')+'</td><td>'+B(e.on?'تعطيل':'تفعيل','etog',e.id,e.on?'d':'s')+' '+B('حذف','edel',e.id,'d')+'</td></tr>').join('')+'</table></div>':empty('أضف موظفيك أولًا.'))+'</div>'+
+ '<div class="box"><h2>إعداد كشف الرواتب</h2><div class="row"><label>الشهر<input id="pmo" type="month" value="'+mo+'" onchange="window._pm=this.value;emp()"></label></div>'+(act.length?'<div class="tw"><table><tr><th>الموظف</th><th>الراتب</th><th>مكافأة / إضافي</th><th>خصم من السلفة</th></tr>'+act.map(e=>S.pay.some(p=>p.m==mo&&p.e==e.id)?'<tr><td>'+esc(e.n)+'</td><td colspan="3" class="k">أُعدّ كشفه لهذا الشهر</td></tr>':'<tr><td>'+esc(e.n)+'</td><td>'+n(e.s)+'</td><td><input id="pb'+e.id+'" type="number" min="0" style="width:90px"></td><td><input id="pd'+e.id+'" type="number" min="0" style="width:90px"></td></tr>').join('')+'</table></div><button class="btn" onclick="prun()">اعتماد الرواتب</button>':empty('لا يوجد موظفون نشطون.'))+'</div>'+
+ '<div class="box"><h2>الرواتب المستحقة والمصروفة</h2>'+(S.pay.length?'<div class="tw"><table><tr><th>الشهر</th><th>الموظف</th><th>الإجمالي</th><th>الخصم</th><th>الصافي</th><th>الحالة</th><th></th></tr>'+S.pay.slice().reverse().slice(0,30).map(p=>'<tr><td>'+p.m+'</td><td>'+esc(ename(p.e))+'</td><td>'+n(p.g)+'</td><td>'+n(p.d)+'</td><td>'+n(p.net)+'</td><td><span class="tag">'+(p.paid?'مصروف':'مستحق')+'</span></td><td>'+(p.paid?'':B('صرف الراتب','ppay',p.id))+'</td></tr>').join('')+'</table></div>':empty('لا توجد كشوف رواتب بعد.'))+'</div>'}
+function eadd(){var nm=val('en').trim();if(!nm)return;S.emp.push({id:uid(),n:nm,j:val('ej'),s:num('es'),on:true});log('إضافة موظف '+nm);save();emp()}
+function etog(id){var e=S.emp.find(x=>x.id==id);e.on=!e.on;save();emp()}
+function sadv(id){var a=num('sa'+id);if(a<=0)return;var mm=val('sam');if(bal(mm)<a&&!confirm('رصيد وسيلة الصرف أقل من المبلغ. متابعة؟'))return;mk('سلفة للموظف '+ename(id),'',[['1205',a,0,id],[mm,0,a]],'سند صرف');save();emp()}
+function prun(){var mo=val('pmo'),rows=[];
+ S.emp.filter(e=>e.on).forEach(e=>{if(S.pay.some(p=>p.m==mo&&p.e==e.id))return;var gr=e.s+num('pb'+e.id),d=Math.min(num('pd'+e.id),Math.max(sbal(e.id),0));rows.push({id:uid(),m:mo,e:e.id,g:gr,d:d,net:gr-d,paid:false})});
+ if(!rows.length){alert('لا يوجد موظفون بدون كشف لهذا الشهر.');return}
+ var G=sum(rows,r=>r.g),N=sum(rows,r=>r.net),L=[['5201',G,0],['2301',0,N]];rows.forEach(r=>{if(r.d)L.push(['1205',0,r.d,r.e])});
+ mk('كشف رواتب شهر '+mo,'',L);S.pay=S.pay.concat(rows);save();emp()}
+function ppay(id){var p=S.pay.find(x=>x.id==id),mm=val('sam');if(bal(mm)<p.net&&!confirm('رصيد وسيلة الصرف أقل من المبلغ. متابعة؟'))return;mk('صرف راتب '+ename(p.e)+' شهر '+p.m,'',[['2301',p.net,0],[mm,0,p.net]],'سند صرف');p.paid=true;save();emp()}
+
+function esal(id){var e=S.emp.find(x=>x.id==id),v=num('se'+id);if(v<0||!e)return;if(v==e.s){alert('الراتب لم يتغير.');return}
+ var old=e.s;e.s=v;log('تعديل راتب '+e.n+' من '+n(old)+' إلى '+n(v));save();emp();alert('تم حفظ الراتب الجديد. يسري على كشوف الرواتب القادمة، ولا يغيّر الكشوف المعتمدة سابقًا.')}
+function edel(id){var e=S.emp.find(x=>x.id==id);if(!e)return;
+ if(S.pay.some(p=>p.e==id)||Math.abs(sbal(id))>0.005||S.ent.some(x=>x.l.some(l=>l.p==id))){alert('لا يمكن حذف '+e.n+' لأن له رواتب أو سلفًا مسجلة. استخدم «تعطيل» بدلًا من الحذف ليبقى سجله المحاسبي سليمًا.');return}
+ if(!confirm('حذف الموظف '+e.n+' نهائيًا؟'))return;S.emp=S.emp.filter(x=>x.id!=id);log('حذف موظف '+e.n);save();emp()}
+/* المخازن والجرد */
+function wq(i,w){var o=i.w||{};return w=='main'?i.q-sum(Object.keys(o),k=>o[k]):(o[w]||0)}
+function wset(i,w,d){if(w=='main')return;i.w=i.w||{};i.w[w]=(i.w[w]||0)+d}
+function wn(id){var w=S.wh.find(x=>x.id==id);return w?w.n:''}
+function wh(){
+ var T=S.itm,W=S.wh,wo=opts(W,w=>w.id,w=>w.n),io=opts(T,i=>i.id,i=>i.n+' ('+(i.t=='r'?'خام':'منتج')+')');
+ $('app').innerHTML='<div class="box"><h2>مخزن جديد</h2><div class="row"><label>اسم المخزن<input id="wnm"></label><button class="btn" onclick="wadd()">إضافة</button></div></div>'+
+ '<div class="box"><h2>الأرصدة حسب المخزن</h2>'+(T.length?'<div class="tw"><table><tr><th>الصنف</th>'+W.map(w=>'<th>'+esc(w.n)+'</th>').join('')+'<th>الإجمالي</th></tr>'+T.map(i=>'<tr><td>'+esc(i.n)+'</td>'+W.map(w=>'<td class="'+(wq(i,w.id)<0?'neg':'')+'">'+n(wq(i,w.id))+'</td>').join('')+'<td><b>'+n(i.q)+' '+esc(i.u)+'</b></td></tr>').join('')+'</table></div><div class="k">المشتريات والمبيعات والإنتاج تُحسب على المخزن الرئيسي، ثم انقل الكميات بالتحويل.</div>':empty('أضف أصنافًا من صفحة المخزون.'))+'</div>'+
+ (T.length?'<div class="box"><h2>تحويل بين مخزنين</h2><div class="row"><label>الصنف<select id="ti">'+io+'</select></label><label>من<select id="tf">'+wo+'</select></label><label>إلى<select id="tt">'+wo+'</select></label><label>الكمية<input id="tq" type="number" min="0"></label><button class="btn" onclick="wtr()">تحويل</button></div></div>'+
+ '<div class="box"><h2>جرد وتالف</h2><div class="row"><label>الصنف<select id="wi">'+io+'</select></label><label>المخزن<select id="ww">'+wo+'</select></label><label>العملية<select id="wk"><option value="c">جرد — الكمية الفعلية</option><option value="d">تالف — الكمية التالفة</option></select></label><label>الكمية<input id="wq" type="number" min="0"></label><label>السبب<input id="wnt"></label><button class="btn" onclick="wadj()">تسجيل</button></div><div class="k">الفرق يُقيَّد بمتوسط تكلفة الصنف على حساب «فروقات وتالف المخزون».</div></div>':'')+
+ '<div class="box"><h2>حركات المخزون</h2>'+(S.mv.length?'<div class="tw"><table>'+S.mv.slice().reverse().slice(0,15).map(x=>'<tr><td class="k">'+x.d+'</td><td><span class="tag">'+x.t+'</span></td><td>'+esc(x.x)+'</td></tr>').join('')+'</table></div>':empty('لا توجد حركات.'))+'</div>'}
+function wadd(){var nm=val('wnm').trim();if(!nm)return;S.wh.push({id:uid(),n:nm});log('إضافة مخزن '+nm);save();wh()}
+function wtr(){var i=S.itm.find(x=>x.id==val('ti')),f=val('tf'),t=val('tt'),q=num('tq');if(!i||q<=0)return;if(f==t){alert('اختر مخزنين مختلفين.');return}if(q>wq(i,f)){alert('المتوفر في '+wn(f)+' هو '+n(wq(i,f))+' فقط.');return}
+ wset(i,f,-q);wset(i,t,q);S.mv.push({d:today(),t:'تحويل',x:i.n+': '+n(q)+' من '+wn(f)+' إلى '+wn(t)});log('تحويل مخزني '+i.n);save();wh()}
+function wadj(){var i=S.itm.find(x=>x.id==val('wi')),w=val('ww'),k=val('wk'),q=num('wq'),nt=val('wnt').trim();if(!i||q<0)return;
+ var cur=wq(i,w),diff=k=='c'?q-cur:-q;if(k=='d'&&q<=0)return;if(k=='d'&&q>cur){alert('المتوفر في '+wn(w)+' هو '+n(cur)+' فقط.');return}
+ if(!diff){alert('لا يوجد فرق بين الجرد والرصيد.');return}
+ var v=Math.abs(diff)*i.c,a=i.t=='r'?'1301':'1302';i.q+=diff;wset(i,w,diff);
+ mk((k=='c'?'تسوية جرد ':'إتلاف ')+i.n+' ('+n(diff)+') '+nt,'',diff<0?[['5205',v,0],[a,0,v]]:[[a,v,0],['5205',0,v]]);
+ S.mv.push({d:today(),t:k=='c'?'جرد':'تالف',x:i.n+' — '+wn(w)+': '+n(diff)+(nt?' ('+nt+')':'')});save();wh()}
+/* الفترات المحاسبية */
+function pstat(mo){return S.per.find(function(p){return p.m==mo})}
+function pcalc(mo){var r=0,x=0,c=0,d=0;S.ent.forEach(function(e){if(e.date.slice(0,7)!=mo)return;c++;if(e.st=='مسودة'){d++;return}e.l.forEach(function(l){var a=S.acc.find(function(y){return y.c==l.a});if(a&&a.t=='r')r+=l.r-l.d;if(a&&a.t=='x')x+=l.d-l.r})});return{r:r,x:x,c:c,d:d}}
+function per(){var ms={};ms[today().slice(0,7)]=1;S.ent.forEach(function(e){ms[e.date.slice(0,7)]=1});S.per.forEach(function(p){ms[p.m]=1});
+ $('app').innerHTML='<div class="box"><h2>الفترات المحاسبية</h2><div class="tw"><table><tr><th>الفترة</th><th>الإيرادات</th><th>المصروفات</th><th>صافي الربح</th><th>القيود</th><th>مسودات</th><th>الحالة</th><th></th></tr>'+Object.keys(ms).sort().reverse().map(function(mo){var c=pcalc(mo),p=pstat(mo),cl=p&&p.c;return '<tr><td>'+mo+'</td><td>'+n(c.r)+'</td><td>'+n(c.x)+'</td><td class="'+(c.r-c.x<0?'neg':'')+'">'+n(c.r-c.x)+'</td><td>'+c.c+'</td><td class="'+(c.d?'warn':'')+'">'+c.d+'</td><td><span class="tag">'+(cl?'مغلقة':'مفتوحة')+'</span>'+(cl?'<div class="k">'+esc(p.by)+' — '+esc(p.at)+'</div>':'')+'</td><td>'+(cl?B('إعادة فتح','popen',mo,'d'):B('إقفال','pclose',mo))+'</td></tr>'}).join('')+'</table></div><div class="k">الفترة المغلقة لا تقبل أي قيد أو سند أو فاتورة بتاريخها، والعملية المرفوضة لا يُحفظ منها شيء. تصحيح خطأ في فترة مغلقة يتم بعكس القيد في فترة مفتوحة. إعادة الفتح للمدير فقط.</div></div>'}
+function pclose(mo){var c=pcalc(mo);if(c.d){alert('يوجد '+c.d+' قيد مسودة في هذه الفترة. رحّلها أو احذفها أولًا.');return}var p=pstat(mo);if(!p){p={m:mo};S.per.push(p)}p.c=true;p.by=CU.n;p.at=new Date().toLocaleString('en-GB');log('إقفال الفترة '+mo);save();per()}
+function popen(mo){if(CU.role!='مدير'){alert('إعادة فتح الفترة للمدير فقط.');return}pstat(mo).c=false;log('إعادة فتح الفترة '+mo);save();per()}
+
+/* العملات */
+function rt(c){var x=S.cur.find(function(y){return y.c==c});return x&&x.rate>0?x.rate:1}
+function cur(){
+ $('app').innerHTML='<div class="box"><h2>عملة جديدة</h2><div class="row"><label>الرمز<input id="kc" placeholder="USD"></label><label>الاسم<input id="kn"></label><label>السعر مقابل الريال اليمني<input id="kr" type="number" min="0"></label><button class="btn" onclick="kadd()">إضافة</button></div></div><div class="box"><h2>أسعار الصرف</h2><div class="tw"><table><tr><th>العملة</th><th>السعر الحالي</th><th>سعر جديد</th><th>آخر تحديث</th></tr>'+S.cur.map(function(c){return '<tr><td>'+esc(c.c)+' — '+esc(c.n)+'</td><td>'+n(c.rate)+'</td><td>'+(c.c=='YER'?'<span class="k">العملة الأساسية</span>':'<input id="kn_'+c.c+'" type="number" min="0" style="width:100px"> '+B('تحديث','kset',c.c))+'</td><td class="k">'+esc(c.h&&c.h.length?c.h[c.h.length-1].d:'—')+'</td></tr>'}).join('')+'</table></div><div class="k">تُسجَّل كل عملية بالسعر المعتمد وقت إدخالها، ولا يتغير بتحديث السعر لاحقًا. تظهر العملات في القيود اليومية وسندات القبض والصرف، أما الفواتير فبالريال اليمني.</div></div>'}
+function kadd(){var c=val('kc').trim().toUpperCase(),r=num('kr');if(!c||r<=0||!val('kn').trim()){alert('أدخل الرمز والاسم وسعر صرف أكبر من صفر.');return}if(S.cur.some(function(x){return x.c==c})){alert('العملة موجودة من قبل.');return}S.cur.push({c:c,n:val('kn').trim(),rate:r,h:[{d:today(),r:r}]});log('إضافة عملة '+c);save();cur()}
+function kset(c){var r=num('kn_'+c),x=S.cur.find(function(y){return y.c==c});if(r<=0)return;x.rate=r;x.h=(x.h||[]).concat([{d:today(),r:r}]);log('تحديث سعر '+c+' إلى '+r);save();cur()}
+function jconv(){return[sum(jl,function(l){return(+l.d||0)*rt(l.c||'YER')}),sum(jl,function(l){return(+l.r||0)*rt(l.c||'YER')})]}
+function jrows(){$('jt').innerHTML='<tr><th>الحساب</th><th>البيان</th><th>العملة</th><th>مدين</th><th>دائن</th><th></th></tr>'+jl.map(function(l,i){return '<tr><td><select onchange="jl['+i+'].a=this.value">'+accOpts('',l.a)+'</select></td><td><input value="'+esc(l.x)+'" oninput="jl['+i+'].x=this.value"></td><td><select onchange="jl['+i+'].c=this.value;jtot()">'+opts(S.cur,function(c){return c.c},function(c){return c.c},l.c||'YER')+'</select></td><td><input type="number" min="0" value="'+esc(l.d)+'" oninput="jl['+i+'].d=this.value;jtot()"></td><td><input type="number" min="0" value="'+esc(l.r)+'" oninput="jl['+i+'].r=this.value;jtot()"></td><td>'+(jl.length>2?'<button class="btn d" onclick="jl.splice('+i+',1);jrows()">×</button>':'')+'</td></tr>'}).join('');jtot()}
+function jtot(){var t=jconv(),d=t[0],r=t[1],ok=Math.abs(d-r)<0.005&&d>0;$('jtot').innerHTML='مدين '+n(d)+' — دائن '+n(r)+' (بالريال اليمني) — <span class="'+(ok?'pos':'neg')+'">'+(ok?'القيد متوازن':'الفرق '+n(d-r))+'</span>'}
+function jsave(post){var t=jconv(),d=t[0],r=t[1];
+ if(post&&(Math.abs(d-r)>=0.005||d<=0)){alert('لا يمكن ترحيل قيد غير متوازن.');return}
+ if(!val('jn').trim()){alert('اكتب البيان العام للقيد.');return}
+ var e=mk(val('jn'),'',jl.map(function(l){var c=l.c||'YER',k=rt(c);return[l.a,(+l.d||0)*k,(+l.r||0)*k,'',l.x+(c!='YER'?' ['+((+l.d)||(+l.r)||0)+' '+c+' @'+k+']':'')]}),'يدوي',val('jd'));if(!post)e.st='مسودة';jl=[];save();je()}
+var _vo=vo;vo=function(){_vo();$('va').parentNode.insertAdjacentHTML('afterend','<label>العملة<select id="vc">'+opts(S.cur,function(c){return c.c},function(c){return c.c})+'</select></label>')};
+function vsave(){var t=VT[val('vt')],c=$('vc')?val('vc'):'YER',k=rt(c),a0=num('va'),a=a0*k,p=val('vp'),mm=val('vm'),acc=t[2]=='X'?val('vx'):t[2];
+ if(a<=0){alert('أدخل مبلغًا صحيحًا.');return}
+ if(t[3]&&!p){alert('اختر العميل أو المورد لهذا النوع.');return}
+ if(t[1]=='out'&&bal(mm)<a&&!confirm('رصيد الحساب المختار أقل من المبلغ. هل تريد المتابعة؟'))return;
+ var d=(val('vn')||t[0])+(p?' — '+pname(p):'')+(c!='YER'?' ['+a0+' '+c+' @'+k+']':'');
+ mk(d,'',t[1]=='in'?[[mm,a,0],[acc,0,a,p]]:[[acc,a,0,p],[mm,0,a]],t[1]=='in'?'سند قبض':'سند صرف');save();vo()}
+
+/* أوامر الشراء والاستلام */
+var pcart=[],pcs='';
+function po(){var sp=S.par.filter(function(p){return p.t=='s'}),its=S.itm.filter(function(i){return i.t=='r'});
+ $('app').innerHTML='<div class="box"><h2>أمر شراء جديد</h2>'+(its.length&&sp.length?'<div class="row"><label>المورد<select id="ps">'+opts(sp,function(p){return p.id},function(p){return p.n},pcs)+'</select></label><label>المادة الخام<select id="pi">'+opts(its,function(i){return i.id},function(i){return i.n})+'</select></label><label>الكمية<input id="pq" type="number" min="0"></label><label>سعر الوحدة<input id="pr2" type="number" min="0"></label><button class="btn s" onclick="poadd()">أضف</button></div>':empty('أضف موردًا ومادة خامًا أولًا.'))+(pcart.length?'<div class="tw"><table><tr><th>المادة</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr>'+pcart.map(function(l){return '<tr><td>'+esc(l.n)+'</td><td>'+n(l.q)+'</td><td>'+n(l.pr)+'</td><td>'+n(l.q*l.pr)+'</td></tr>'}).join('')+'</table></div><div class="tot">الإجمالي: '+m(sum(pcart,function(l){return l.q*l.pr}))+'</div><button class="btn" onclick="posave()">حفظ أمر الشراء</button> <button class="btn d" onclick="pcart=[];po()">مسح</button>':'')+'<div class="k">أمر الشراء لا يُحدث أي قيد محاسبي. القيد والمخزون عند الاستلام فقط.</div></div>'+
+ (S.po.length?S.po.slice().reverse().map(function(o){var open=o.st=='مفتوح'||o.st=='مستلم جزئيًا';return '<div class="box"><h2>'+esc(o.no)+' — '+esc(pname(o.p))+' <span class="tag">'+o.st+'</span> <span class="k">'+o.d+'</span></h2><div class="tw"><table><tr><th>المادة</th><th>المطلوب</th><th>المستلم</th><th>المتبقي</th><th>السعر</th>'+(open?'<th>استلام الآن</th>':'')+'</tr>'+o.l.map(function(l,k){return '<tr><td>'+esc(l.n)+'</td><td>'+n(l.q)+'</td><td>'+n(l.r)+'</td><td>'+n(l.q-l.r)+'</td><td>'+n(l.pr)+'</td>'+(open?'<td><input id="rq'+o.id+'_'+k+'" type="number" min="0" style="width:90px"></td>':'')+'</tr>'}).join('')+'</table></div>'+(open?B('تسجيل الاستلام','rcv',o.id,'btn')+' '+B('إغلاق الأمر','pocl',o.id,'d'):'')+'</div>'}).join(''):'<div class="box">'+empty('لا توجد أوامر شراء بعد.')+'</div>')}
+function poadd(){pcs=val('ps');var i=S.itm.find(function(x){return x.id==val('pi')}),q=num('pq'),pr=num('pr2')||(i?i.c:0);if(!i||q<=0)return;pcart.push({id:i.id,n:i.n,q:q,pr:pr,r:0});po()}
+function posave(){if(!pcs||!pcart.length)return;S.po.push({id:uid(),no:'أ-'+(S.po.length+1),p:pcs,d:today(),l:pcart,st:'مفتوح'});log('أمر شراء '+(S.po.length)+' للمورد '+pname(pcs));pcart=[];save();po()}
+function rcv(id){var o=S.po.find(function(x){return x.id==id}),got=[],bad=false;
+ o.l.forEach(function(l,k){var q=num('rq'+o.id+'_'+k);if(q<=0)return;if(q>l.q-l.r+0.0001){bad=true;alert('كمية '+l.n+' المستلمة أكبر من المتبقي ('+n(l.q-l.r)+').');return}got.push([l,q])});
+ if(bad)return;if(!got.length){alert('أدخل كمية مستلمة لصنف واحد على الأقل.');return}
+ var tot=0;got.forEach(function(g){var l=g[0],q=g[1],i=S.itm.find(function(x){return x.id==l.id});i.c=(i.q*i.c+q*l.pr)/(i.q+q);i.q+=q;l.r+=q;tot+=q*l.pr;S.mv.push({d:today(),t:'استلام',x:l.n+': '+n(q)+' — '+o.no})});
+ mk('استلام أمر الشراء '+o.no+' — '+pname(o.p),o.no,[['1301',tot,0],['2101',0,tot,o.p]]);
+ o.st=o.l.every(function(l){return l.r>=l.q-0.0001})?'مستلم':'مستلم جزئيًا';save();po()}
+function pocl(id){var o=S.po.find(function(x){return x.id==id});o.st=o.l.some(function(l){return l.r>0})?'مغلق':'ملغى';log('إغلاق أمر الشراء '+o.no);save();po()}
+
+/* حماية العمليات من الفترات المغلقة: تُلغى العملية كلها دون حفظ أي أثر */
+function guard(f){return function(){var snap=JSON.stringify(S);try{return f.apply(this,arguments)}catch(e){if(String(e.message).indexOf('CLOSED:')==0){S=JSON.parse(snap);alert('هذه العملية تقع في فترة مغلقة ('+e.message.slice(7)+') ولم تُنفَّذ. أعد فتح الفترة أو غيّر التاريخ.');render()}else throw e}}}
+['jsave','jpost','jrev','vsave','isave','xmake','cadd','cclr','cact','prun','ppay','sadv','wadj','rcv'].forEach(function(k){window[k]=guard(window[k])});
+if(!S.cur.length)S.cur.push({c:'YER',n:'ريال يمني',rate:1,h:[]});
+if(!S.wh.length)S.wh.push({id:'main',n:'المخزن الرئيسي'});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+/* ===== الربط مع Supabase ===== */
+var sb=null,SYNC={},flushing=false,again=false,tmr=null,lastPull=0,lmode='in';
+var MAP={acc:'accounts',ent:'entries',par:'parties',itm:'items',inv:'invoices',chk:'checks',emp:'employees',pay:'payroll',wh:'warehouses',mv:'movements',per:'periods',cur:'currencies',po:'purchase_orders',log:'logs'};
+var DEF=JSON.parse(JSON.stringify({acc:S.acc,cur:S.cur,wh:S.wh}));
+function rid(k,r){if(r.id)return r.id;if(k=='acc'||k=='cur')return r.c;if(k=='per')return r.m;return r._id||(r._id=uid())}
+function sstat(t,bad){var e=$('sync');if(!e){e=document.createElement('div');e.id='sync';e.style.cssText='position:fixed;bottom:calc(10px + env(safe-area-inset-bottom,0px));left:10px;padding:4px 12px;border-radius:14px;font-size:12px;background:var(--card);border:1px solid var(--bd);z-index:9';document.body.appendChild(e)}e.textContent=t;e.style.color=bad?'var(--no)':'var(--mu)'}
+function syncSoon(){if(!CU)return;sstat('جارٍ الحفظ…');clearTimeout(tmr);tmr=setTimeout(flush,250)}
+function save(){syncSoon()}
+async function flush(){
+ if(!sb||!CU)return;if(flushing){again=true;return}flushing=true;
+ try{
+  for(var k in MAP){var t=MAP[k],c0=SYNC[k]||(SYNC[k]={}),seen={},up=[];
+   (S[k]||[]).forEach(function(r){var id=rid(k,r),j=JSON.stringify(r);seen[id]=1;if(c0[id]!==j)up.push({id:id,j:j,row:{id:id,data:r}})});
+   for(var i=0;i<up.length;i+=200){var ch=up.slice(i,i+200),res=await sb.from(t).upsert(ch.map(function(x){return x.row}));if(res.error)throw res.error;ch.forEach(function(x){c0[x.id]=x.j})}
+   var del=Object.keys(c0).filter(function(id){return!seen[id]});
+   if(del.length){var r2=await sb.from(t).delete().in('id',del);if(r2.error)throw r2.error;del.forEach(function(id){delete c0[id]})}
+  }
+  sstat('تم الحفظ ✓');
+ }catch(e){flushing=false;sstat('تعذر الحفظ',1);alert('تعذر حفظ التغييرات: '+(e.message||e)+'\nسيتم تحديث البيانات من الخادم.');await pull();render();return}
+ flushing=false;if(again){again=false;flush()}
+}
+async function loadTable(t){var out=[],from=0;for(;;){var r=await sb.from(t).select('data').order('ord').range(from,from+999);if(r.error)throw r.error;out=out.concat(r.data.map(function(x){return x.data}));if(r.data.length<1000)break;from+=1000}return out}
+async function pull(){
+ try{sstat('جارٍ التحديث…');
+  for(var k in MAP){S[k]=await loadTable(MAP[k]);var m={};S[k].forEach(function(r){m[rid(k,r)]=JSON.stringify(r)});SYNC[k]=m}
+  S.seq=S.ent.reduce(function(a,e){return Math.max(a,e.no||0)},0);
+  if(CU&&(CU.role=='مدير'||CU.role=='محاسب')){var seed=false;if(!S.acc.length){S.acc=DEF.acc.slice();seed=true}if(!S.cur.length){S.cur=DEF.cur.slice();seed=true}if(!S.wh.length){S.wh=DEF.wh.slice();seed=true}if(seed)flush()}
+  sstat('محدّث ✓');lastPull=Date.now();
+ }catch(e){sstat('تعذر التحديث',1);alert('تعذر تحميل البيانات: '+(e.message||e))}
+}
+async function refresh(){await pull();render()}
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&CU&&!flushing&&Date.now()-lastPull>30000)refresh()});
+
+/* الدخول */
+function trErr(x){var s=String(x.message||x);if(/Invalid login/i.test(s))return 'البريد أو كلمة المرور غير صحيحة.';if(/already registered/i.test(s))return 'هذا البريد مسجل من قبل.';if(/not confirmed/i.test(s))return 'يجب تأكيد البريد الإلكتروني أولًا.';if(/rate limit/i.test(s))return 'محاولات كثيرة. انتظر قليلًا ثم أعد المحاولة.';return s}
+function lmsg(t){var m=$('lm');if(m)m.textContent=t}
+function login(){var up=lmode=='up';
+ $('app').innerHTML='<div class="box" style="max-width:400px;margin:30px auto"><h2>'+(up?'إنشاء حساب جديد':'تسجيل الدخول')+'</h2>'+(up?'<div class="row"><label>الاسم الظاهر<input id="lnm"></label></div>':'')+'<div class="row"><label>البريد الإلكتروني<input id="lu" type="email" dir="ltr" autocomplete="username"></label></div><div class="row"><label>كلمة المرور<input id="lp" type="password" dir="ltr" autocomplete="'+(up?'new-password':'current-password')+'" onkeydown="if(event.key==\'Enter\')doLogin()"></label></div><div class="warn" id="lm"></div><button class="btn" onclick="doLogin()">'+(up?'إنشاء الحساب':'دخول')+'</button> <button class="btn s" onclick="lmode=\''+(up?'in':'up')+'\';login()">'+(up?'لدي حساب':'حساب جديد')+'</button>'+(up?'':' <button class="btn s" onclick="forgot()">نسيت كلمة المرور</button>')+'<div class="k" style="margin-top:10px">أول حساب يُنشأ يصبح مديرًا، وبقية الحسابات تنتظر تفعيل المدير.</div></div>'}
+async function doLogin(){var e=val('lu').trim(),p=val('lp');if(!e||p.length<6){lmsg('أدخل البريد وكلمة مرور من 6 أحرف على الأقل.');return}
+ try{
+  if(lmode=='up'){var r=await sb.auth.signUp({email:e,password:p,options:{data:{name:val('lnm').trim()||e}}});if(r.error)throw r.error;if(!r.data.session){lmode='in';login();lmsg('تم إنشاء الحساب. إن وصلك بريد تأكيد فافتح الرابط ثم سجّل الدخول.');return}}
+  else{var r2=await sb.auth.signInWithPassword({email:e,password:p});if(r2.error)throw r2.error}
+  await start();
+ }catch(x){lmsg(trErr(x))}}
+async function forgot(){var e=val('lu').trim();if(!e){lmsg('اكتب بريدك أولًا.');return}var r=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.href.split('#')[0]});lmsg(r.error?trErr(r.error):'أُرسل رابط إعادة التعيين إلى بريدك.')}
+async function start(){
+ var u=(await sb.auth.getUser()).data.user;if(!u){render();return}
+ var r=await sb.from('profiles').select('*').eq('id',u.id).single();if(r.error){render();lmsg('تعذر قراءة الملف الشخصي: '+r.error.message);return}
+ var p=r.data;
+ if(!p.active){CU=null;$('nav').innerHTML='';$('app').innerHTML='<div class="box" style="max-width:420px;margin:30px auto"><h2>حسابك بانتظار التفعيل</h2><div class="empty">اطلب من المدير تفعيل حسابك وتحديد دورك، ثم سجّل الدخول من جديد.</div><button class="btn s" onclick="logout()">خروج</button></div>';return}
+ CU={id:p.id,u:p.email,n:p.name,role:p.role,on:true};await pull();render()}
+async function logout(){if(CU){log('تسجيل خروج');try{await flush()}catch(e){}}await sb.auth.signOut();CU=null;for(var k in MAP)S[k]=[];SYNC={};render()}
+
+/* المستخدمون (من Supabase) */
+async function usr(){
+ $('app').innerHTML='<div class="box">'+empty('جارٍ التحميل…')+'</div>';
+ var r=await sb.from('profiles').select('*').order('created_at');if(r.error){$('app').innerHTML='<div class="box">'+empty(esc(r.error.message))+'</div>';return}
+ var scr={};TABS.forEach(function(t){scr[t[0]]=t[1]});
+ $('app').innerHTML='<div class="box"><h2>المستخدمون</h2><div class="tw"><table><tr><th>الاسم</th><th>البريد</th><th>الدور</th><th>الحالة</th><th></th></tr>'+r.data.map(function(u){var me=u.id==CU.id;return '<tr><td>'+esc(u.name)+'</td><td dir="ltr">'+esc(u.email)+'</td><td><select data-i="'+u.id+'" onchange="urole(this.dataset.i,this.value)"'+(me?' disabled':'')+'>'+opts(Object.keys(ROLES),function(x){return x},function(x){return x},u.role)+'</select></td><td><span class="tag">'+(u.active?'نشط':'بانتظار التفعيل / معطل')+'</span></td><td>'+(me?'':B(u.active?'تعطيل':'تفعيل','utog',u.id+'|'+(u.active?0:1),u.active?'d':'s'))+'</td></tr>'}).join('')+'</table></div><div class="k">يسجّل الموظف حسابه من شاشة الدخول (حساب جديد)، ثم تفعّله أنت هنا وتحدد دوره. التعطيل يمنع الدخول فقط وتبقى عملياته في السجل.</div></div>'+
+ '<div class="box"><h2>صلاحيات الأدوار</h2><table>'+Object.keys(ROLES).map(function(x){return '<tr><td><b>'+x+'</b></td><td>'+(ROLES[x]=='*'?'كل الشاشات وإدارة المستخدمين':ROLES[x].split(',').map(function(c){return scr[c]}).join('، '))+'</td></tr>'}).join('')+'</table><div class="k" style="margin-top:8px">الصلاحيات مطبّقة أيضًا على قاعدة البيانات (RLS)، فلا يستطيع مستخدم تجاوزها بالتحايل على الواجهة.</div></div>'+
+ '<div class="box"><h2>استيراد بيانات من النسخة التجريبية</h2><div class="k">الصق نص التصدير (JSON) هنا. يُضاف إلى القاعدة ما لم يكن موجودًا.</div><textarea id="imp" rows="4" dir="ltr" style="width:100%;margin:8px 0;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:7px"></textarea><button class="btn" onclick="importData()">استيراد</button></div>'}
+async function urole(id,r){var x=await sb.from('profiles').update({role:r}).eq('id',id);if(x.error)alert(x.error.message);else{log('تغيير دور مستخدم إلى '+r);syncSoon()}usr()}
+async function utog(a){var p=a.split('|'),x=await sb.from('profiles').update({active:p[1]=='1'}).eq('id',p[0]);if(x.error)alert(x.error.message);else{log((p[1]=='1'?'تفعيل':'تعطيل')+' مستخدم');syncSoon()}usr()}
+function importData(){var t=val('imp').trim();if(!t)return;var d;try{d=JSON.parse(t)}catch(e){alert('النص ليس JSON صحيحًا.');return}
+ if(!confirm('سيتم رفع البيانات إلى قاعدة البيانات. متابعة؟'))return;var c=0;
+ Object.keys(MAP).forEach(function(k){if(Array.isArray(d[k])){var have={};(S[k]||[]).forEach(function(r){have[rid(k,r)]=1});d[k].forEach(function(r){if(!have[rid(k,r)]){S[k].push(r);c++}})}});
+ S.seq=S.ent.reduce(function(a,e){return Math.max(a,e.no||0)},0);save();alert('تمت إضافة '+c+' سجل.');usr()}
+
+/* التشغيل */
+(function(){
+ var c=window.CFG||{};
+ if(!c.SUPABASE_URL||!c.SUPABASE_ANON_KEY||!window.supabase){$('app').innerHTML='<div class="box"><h2>الإعداد غير مكتمل</h2><div class="empty">املأ عنوان المشروع ومفتاح anon في ملف config.js كما في ملف README، ثم أعد فتح الصفحة.</div></div>';return}
+ sb=supabase.createClient(c.SUPABASE_URL,c.SUPABASE_ANON_KEY);
+ sb.auth.onAuthStateChange(function(ev){if(ev=='PASSWORD_RECOVERY')setTimeout(function(){var np=prompt('كلمة المرور الجديدة (6 أحرف على الأقل):');if(np&&np.length>=6)sb.auth.updateUser({password:np}).then(function(r){alert(r.error?trErr(r.error):'تم تغيير كلمة المرور.')})},300)});
+ sb.auth.getSession().then(function(r){if(r.data.session)start();else render()});
+ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
+})();
+</script>
+</body>
+</html>
